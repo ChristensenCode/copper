@@ -13,6 +13,9 @@ from copper.library import *
 import copper.constants as const
 from copper.constants import LOGGING_FORMAT
 import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum, auto
 
 logging.basicConfig(format=LOGGING_FORMAT)
 
@@ -65,62 +68,67 @@ class Chiller:
         self.model = model
         self.sim_engine = sim_engine
         self.set_of_curves = set_of_curves
+
+        self.lct = -999
+
         if self.condenser_type == "water":
             if self.part_eff_ref_std == "ahri_550/590":
-                lwt = newUnits.F_to_C(const.COOLING_LCT_550_590)
-                ect = newUnits.F_to_C(const.TOWER_ECT_550_590)
-                lct = newUnits.F_to_C(const.TOWER_LCT_550_590)
+                leaving_water_temperature = newUnits.F_to_C(const.COOLING_LCT_550_590)
+                entering_condenser_temperature = newUnits.F_to_C(
+                    const.TOWER_ECT_550_590
+                )
+                leaving_condenser_temperature = newUnits.F_to_C(const.TOWER_LCT_550_590)
             elif self.part_eff_ref_std == "ahri_551/591":
-                lwt = const.COOLING_LCT_551_591
-                ect = const.TOWER_ENTERING_TEMP_551_591
-                lct = const.TOWER_ECT_551_591
+                leaving_water_temperature = const.COOLING_LCT_551_591
+                entering_condenser_temperature = const.TOWER_ENTERING_TEMP_551_591
+                leaving_condenser_temperature = const.TOWER_ECT_551_591
 
             if self.model == "ect_lwt":
                 self.plotting_range = {
                     "eir-f-t": {
-                        "x1_min": lwt,
-                        "x1_max": lwt,
-                        "x1_norm": lwt,
+                        "x1_min": leaving_water_temperature,
+                        "x1_max": leaving_water_temperature,
+                        "x1_norm": leaving_water_temperature,
                         "nbval": 50,
                         "x2_min": 10,
                         "x2_max": 40,
-                        "x2_norm": ect,
+                        "x2_norm": entering_condenser_temperature,
                     },
                     "cap-f-t": {
-                        "x1_min": lwt,
-                        "x1_max": lwt,
-                        "x1_norm": lwt,
+                        "x1_min": leaving_water_temperature,
+                        "x1_max": leaving_water_temperature,
+                        "x1_norm": leaving_water_temperature,
                         "nbval": 50,
                         "x2_min": 10,
                         "x2_max": 40,
-                        "x2_norm": ect,
+                        "x2_norm": entering_condenser_temperature,
                     },
                     "eir-f-plr": {"x1_min": 0, "x1_max": 1, "x1_norm": 1, "nbval": 50},
                 }
             elif self.model == "lct_lwt":
                 self.plotting_range = {
                     "eir-f-t": {
-                        "x1_min": lwt,
-                        "x1_max": lwt,
-                        "x1_norm": lwt,
+                        "x1_min": leaving_water_temperature,
+                        "x1_max": leaving_water_temperature,
+                        "x1_norm": leaving_water_temperature,
                         "nbval": 50,
                         "x2_min": 10,
                         "x2_max": 60,
-                        "x2_norm": lct,
+                        "x2_norm": leaving_condenser_temperature,
                     },
                     "cap-f-t": {
-                        "x1_min": lwt,
-                        "x1_max": lwt,
-                        "x1_norm": lwt,
+                        "x1_min": leaving_water_temperature,
+                        "x1_max": leaving_water_temperature,
+                        "x1_norm": leaving_water_temperature,
                         "nbval": 50,
                         "x2_min": 10,
                         "x2_max": 60,
-                        "x2_norm": lct,
+                        "x2_norm": leaving_condenser_temperature,
                     },
                     "eir-f-plr": {
-                        "x1_min": lct,
-                        "x1_max": lct,
-                        "x1_norm": lct,
+                        "x1_min": leaving_condenser_temperature,
+                        "x1_max": leaving_condenser_temperature,
+                        "x1_norm": leaving_condenser_temperature,
                         "nbval": 50,
                         "x2_min": 0.0,
                         "x2_max": 1.0,
@@ -131,37 +139,41 @@ class Chiller:
                 raise ValueError("Algorithm not supported.")
         elif self.condenser_type == "air":
             if self.part_eff_ref_std == "ahri_550/590":
-                lwt = newUnits.F_to_C(const.COOLING_LCT_550_590)
-                ect = newUnits.F_to_C(const.EVAP_ECT)
-                lct = -999  # does not apply
+                leaving_water_temperature = newUnits.F_to_C(const.COOLING_LCT_550_590)
+                entering_condenser_temperature = newUnits.F_to_C(const.EVAP_ECT)
+                leaving_condenser_temperature = -999  # does not apply
             elif self.part_eff_ref_std == "ahri_551/591":
-                lwt = const.COOLING_LCT_551_591
-                ect = const.TOWER_ECT_551_591
-                lct = -999  # does not apply
+                leaving_water_temperature = const.COOLING_LCT_551_591
+                entering_condenser_temperature = const.TOWER_ECT_551_591
+                leaving_condenser_temperature = -999  # does not apply
 
             self.plotting_range = {
                 "eir-f-t": {
-                    "x1_min": lwt,
-                    "x1_max": lwt,
-                    "x1_norm": lwt,
+                    "x1_min": leaving_water_temperature,
+                    "x1_max": leaving_water_temperature,
+                    "x1_norm": leaving_water_temperature,
                     "nbval": 50,
                     "x2_min": 10,
                     "x2_max": 40,
-                    "x2_norm": ect,
+                    "x2_norm": entering_condenser_temperature,
                 },
                 "cap-f-t": {
-                    "x1_min": lwt,
-                    "x1_max": lwt,
-                    "x1_norm": lwt,
+                    "x1_min": leaving_water_temperature,
+                    "x1_max": leaving_water_temperature,
+                    "x1_norm": leaving_water_temperature,
                     "nbval": 50,
                     "x2_min": 10,
                     "x2_max": 40,
-                    "x2_norm": ect,
+                    "x2_norm": entering_condenser_temperature,
                 },
                 "eir-f-plr": {"x1_min": 0, "x1_max": 1, "x1_norm": 1, "nbval": 50},
             }
 
-        self.ref_lwt, self.ref_ect, self.ref_lct = lwt, ect, lct
+        self.ref_lwt, self.ref_ect, self.ref_lct = (
+            leaving_water_temperature,
+            entering_condenser_temperature,
+            leaving_condenser_temperature,
+        )
 
     def get_ref_values(self, out_var):
         """Get chiller reference/rated independent variables values (temperature and part load ratio) for an output variable (e.g., eir-f-t, eir-f-plr, cap-f-t).
@@ -337,13 +349,8 @@ class Chiller:
             kwpton_ref_unit = Units(kwpton_ref, kwpton_ref_unit)
             kwpton_ref = kwpton_ref_unit.conversion("kw/ton")
 
-        # Conversion factors
-        # TODO: remove these and use the unit class
-        ton_to_kbtu = 12
-        kbtu_to_kw = 3.412141633
-
         # Full load conditions
-        eir_ref = 1 / (ton_to_kbtu / kwpton_ref / kbtu_to_kw)
+        eir_ref = 1 / (constants.TON_TO_KBTU / kwpton_ref / constants.KBTU_TO_KW)
 
         return eir_ref
 
@@ -386,11 +393,6 @@ class Chiller:
         :rtype: float
 
         """
-
-        # Conversion factors
-        # TODO: remove these and use the unit class
-        ton_to_kbtu = 12
-        kbtu_to_kw = 3.412141633
 
         # Get reference eir
         eir_ref = self.get_eir_ref(alt)
@@ -486,7 +488,7 @@ class Chiller:
                     return -999
 
                 # Convert efficiency to kW/ton
-                kwpton = eir / kbtu_to_kw * ton_to_kbtu
+                kwpton = eir / constants.KBTU_TO_KW * constants.TON_TO_KBTU
 
                 if output_report:
                     cap_ton = self.ref_cap
@@ -505,7 +507,7 @@ class Chiller:
                     logging.info(part_report)
 
                 # Store efficiency for IPLV calculation
-                kwpton_lst.append(eir / kbtu_to_kw * ton_to_kbtu)
+                kwpton_lst.append(eir / constants.KBTU_TO_KW * constants.TON_TO_KBTU)
 
                 # Stop here for full load calculations
                 if eff_type == "full" and idx == 0:
@@ -721,38 +723,38 @@ class Chiller:
 
         # Selecting the relevant filters based on compressor type
         if self.compressor_type == "positive_displacement":
-            tr_wtr_screw = lib.find_set_of_curvess_from_lib(
+            tr_wtr_screw = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "screw")], part_eff_flag=True
             )
-            tr_wtr_scroll = lib.find_set_of_curvess_from_lib(
+            tr_wtr_scroll = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "scroll")], part_eff_flag=True
             )
-            tr_wtr_rec = lib.find_set_of_curvess_from_lib(
+            tr_wtr_rec = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "reciprocating")],
                 part_eff_flag=True,
             )
             sets = tr_wtr_screw + tr_wtr_scroll + tr_wtr_rec
         elif self.compressor_type == "any":
-            tr_wtr_screw = lib.find_set_of_curvess_from_lib(
+            tr_wtr_screw = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "screw")], part_eff_flag=True
             )
-            tr_wtr_scroll = lib.find_set_of_curvess_from_lib(
+            tr_wtr_scroll = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "scroll")], part_eff_flag=True
             )
-            tr_wtr_rec = lib.find_set_of_curvess_from_lib(
+            tr_wtr_rec = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "reciprocating")],
                 part_eff_flag=True,
             )
-            ep_wtr_cent = lib.find_set_of_curvess_from_lib(
+            ep_wtr_cent = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "centrifugal")],
                 part_eff_flag=True,
             )
             sets = tr_wtr_screw + tr_wtr_scroll + tr_wtr_rec + ep_wtr_cent
         elif self.compressor_type == "scroll/screw":
-            tr_wtr_screw = lib.find_set_of_curvess_from_lib(
+            tr_wtr_screw = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "screw")], part_eff_flag=True
             )
-            tr_wtr_scroll = lib.find_set_of_curvess_from_lib(
+            tr_wtr_scroll = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", "scroll")], part_eff_flag=True
             )
             sets = tr_wtr_screw + tr_wtr_scroll
@@ -762,7 +764,7 @@ class Chiller:
             "reciprocating",
             "centrifugal",
         ]:
-            ep_wtr = lib.find_set_of_curvess_from_lib(
+            ep_wtr = lib.find_set_of_curves_from_lib(
                 filters=filters + [("compressor_type", self.compressor_type)],
                 part_eff_flag=True,
             )
@@ -825,3 +827,39 @@ class Chiller:
         self.ranges = self.get_ranges()
         curves = SetsofCurves(sets=csets, eqp=self)
         return curves
+
+
+class ChillerInterface(ABC):
+    @abstractmethod
+    def get_reference_values(self):
+        """_summary_"""
+        pass
+
+
+class AirChiller(ChillerInterface):
+    ...
+
+
+class WaterChiller(ChillerInterface):
+    ...
+
+
+@dataclass(frozen=True)
+class AirData:
+    ...
+
+
+@dataclass(frozen=True)
+class WaterData:
+    ...
+
+
+class ModelTypes(Enum):
+    ECT_LWT = auto()
+    LCT_LWT = auto()
+
+
+class CurveTypes(Enum):
+    EIR_F_T = auto()
+    CAP_F_T = auto()
+    EIR_F_PLR = auto()
