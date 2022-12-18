@@ -23,6 +23,9 @@ class Library:
         # Load library
         self.data = json.loads(open(self.path, "r").read())
 
+        # read in information using pandas
+        self.df_data = pd.read_json(self.path, orient="index")
+
         # Calculate part load efficiency for each item in the library
         for item, vals in self.data.items():
 
@@ -147,7 +150,7 @@ class Library:
         remove_set_of_curves = self._remove_set_of_curves(curve_data_parameters)
         return self._merge_curve_data(remove_set_of_curves)
 
-    def find_set_of_curvess_from_lib(self, filters=[], part_eff_flag=False):
+    def find_set_of_curves_from_lib(self, filters=[], part_eff_flag=False):
         """Retrieve sets of curves from a library matching specific filters.
 
         :param list filters: List of filters, represented by tuples (field, val)
