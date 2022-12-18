@@ -860,6 +860,16 @@ class ModelTypes(Enum):
 
 
 class CurveTypes(Enum):
+    """Different types of modifiers
+
+    1. EIR-F-T      -->     Energy Input Ratio modifier as a Function of Temperature
+    2. CAP-F-T      -->     Capacity modifier as a function of temperature
+    3. EIR-F-PLR    -->     Energy Input Ratio modifier as a function of chiller's Part Load Ratio
+
+    :param Enum: parent class
+    :type Enum: parent class
+    """
+
     EIR_F_T = auto()
     CAP_F_T = auto()
     EIR_F_PLR = auto()
