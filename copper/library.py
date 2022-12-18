@@ -23,9 +23,6 @@ class Library:
         # Load library
         self.data = json.loads(open(self.path, "r").read())
 
-        # read in information using pandas
-        self.df_data = pd.read_json(self.path, orient="index")
-
         # Calculate part load efficiency for each item in the library
         for item, vals in self.data.items():
 
@@ -88,6 +85,43 @@ class Library:
                         del vals["part_eff"]
                     if "part_eff_unit" in vals.keys():
                         del vals["part_eff_unit"]
+
+    def _flatten_chiller_curve_data(
+        self, original_chiller_curves: pd.DataFrame
+    ) -> pd.DataFrame:
+        # Creates an empty dataframe to build with data
+        flattened_df = pd.DataFrame()
+
+        # Retains the original curve number in the chiller_curves.json
+        original_chiller_curves.reset_index(inplace=True)
+        original_chiller_curves.rename(columns={"index": "curve_number"}, inplace=True)
+
+        # Loops over the original dataframe row by row. TODO: this could probably be vectorized.
+        for _, original_row_data in original_chiller_curves.iterrows():
+            # Creates a dataframe based on the set_of_curves data from the original dataframe.
+            set_of_curve_data = pd.DataFrame(
+                original_row_data["set_of_curves"]
+            ).transpose()
+
+            # The index should be dropped inplace because it's not needed.
+            set_of_curve_data.reset_index(inplace=True, drop=True)
+
+            # Repeats the original row based on the number of items in the set_of_curves
+            row_data = pd.concat(
+                [pd.DataFrame(original_row_data.drop("set_of_curves")).transpose()]
+                * len(set_of_curve_data)
+            )
+
+            # Again the index data is not needed
+            row_data.reset_index(inplace=True, drop=True)
+
+            # Combines the repeated row data with the set_of_curves data
+            merge_with_original = pd.concat([row_data, set_of_curve_data], axis=1)
+
+            # Appends the new updated rows to the empty dataframe
+            flattened_df = pd.concat([flattened_df, merge_with_original], axis=0)
+            # to create csv --> flattened_df.to_csv("chiller_curves.csv", index=False, header=True)
+        return flattened_df
 
     def load_obj(self, data):
         """Load data for an equipment from the libary.
