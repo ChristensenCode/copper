@@ -27,6 +27,8 @@ COOLING_LCT_550_590 = 44.00
 
 EVAP_ECT = 95.00  # TODO: not sure about this one.
 
+UNDEFINED_CONSTANT = -999
+
 # Constants from the ahri 551/591 Table 4.
 # https://www.ahrinet.org/sites/default/files/2022-06/AHRI%20Standard%20551-591%202020%20%28SI%29%20with%20Addendum%201.pdf
 TOWER_ECT_551_591 = 35.00
