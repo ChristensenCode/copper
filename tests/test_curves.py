@@ -6,6 +6,7 @@ import numpy as np
 import CoolProp.CoolProp as CP
 import os
 from pathlib import Path
+from copper.constants import CurveFilter
 
 LOCATION = os.path.dirname(os.path.realpath(__file__))
 CHILLER_LIB = os.path.join(LOCATION, "../copper/lib", "chiller_curves.json")
@@ -29,21 +30,23 @@ class TestCurves(TestCase):
         with self.assertRaises(ValueError):
             self.lib.get_set_of_curves_by_name(c_name + "s")
 
+        equipment_filter = CurveFilter("eqp_type", "chiller")
+
         # Equipment lookup
-        self.assertTrue(
-            len(self.lib.find_equipment(filters=[("eqp_type", "chiller")]).keys())
-        )
+        self.assertTrue(len(self.lib.find_equipment(filters=[equipment_filter]).keys()))
         self.assertFalse(
-            len(self.lib.find_equipment(filters=[("eqp_type", "vrf")]).keys())
+            len(
+                self.lib.find_equipment(filters=[CurveFilter("eqp_type", "vrf")]).keys()
+            )
         )
 
         # Set of curves lookup using filter
         filters = [
-            ("eqp_type", "chiller"),
-            ("sim_engine", "energyplus"),
-            ("model", "ect_lwt"),
-            ("condenser_type", "air"),
-            ("source", "2"),
+            CurveFilter("eqp_type", "chiller"),
+            CurveFilter("sim_engine", "energyplus"),
+            CurveFilter("model", "ect_lwt"),
+            CurveFilter("condenser_type", "air"),
+            CurveFilter("source", "2"),
         ]
 
         set_of_curvess = self.lib.find_set_of_curves_from_lib(filters=filters)
