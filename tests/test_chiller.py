@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from copper.library import Library
-from copper.chiller import Chiller
+from copper.chiller import Chiller, CurveTypes
 from copper.units import Units
 import pickle as pkl
 import numpy as np
@@ -44,13 +44,16 @@ class TestChiller(TestCase):
         )
 
         self.assertTrue(
-            [6.7, 34.6] == [round(v, 1) for v in chlr.get_ref_values("cap-f-t")]
+            [6.7, 34.6]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.CAP_F_T)]
         )
         self.assertTrue(
-            [6.7, 34.6] == [round(v, 1) for v in chlr.get_ref_values("eir-f-t")]
+            [6.7, 34.6]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_T)]
         )
         self.assertTrue(
-            [34.6, 1.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-plr")]
+            [34.6, 1.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_PLR)]
         )
 
         chlr = Chiller(
@@ -68,13 +71,16 @@ class TestChiller(TestCase):
         )
 
         self.assertTrue(
-            [7.0, 35.0] == [round(v, 1) for v in chlr.get_ref_values("cap-f-t")]
+            [7.0, 35.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.CAP_F_T)]
         )
         self.assertTrue(
-            [7.0, 35.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-t")]
+            [7.0, 35.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_T)]
         )
         self.assertTrue(
-            [35.0, 1.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-plr")]
+            [35.0, 1.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_PLR)]
         )
 
         chlr = Chiller(
@@ -92,13 +98,16 @@ class TestChiller(TestCase):
         )
 
         self.assertTrue(
-            [6.7, 29.4] == [round(v, 1) for v in chlr.get_ref_values("cap-f-t")]
+            [6.7, 29.4]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.CAP_F_T)]
         )
         self.assertTrue(
-            [6.7, 29.4] == [round(v, 1) for v in chlr.get_ref_values("eir-f-t")]
+            [6.7, 29.4]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_T)]
         )
         self.assertTrue(
-            [1.0, 0.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-plr")]
+            [1.0, 0.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_PLR)]
         )
 
         chlr = Chiller(
@@ -116,13 +125,16 @@ class TestChiller(TestCase):
         )
 
         self.assertTrue(
-            [7.0, 30.0] == [round(v, 1) for v in chlr.get_ref_values("cap-f-t")]
+            [7.0, 30.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.CAP_F_T)]
         )
         self.assertTrue(
-            [7.0, 30.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-t")]
+            [7.0, 30.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_T)]
         )
         self.assertTrue(
-            [1.0, 0.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-plr")]
+            [1.0, 0.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_PLR)]
         )
 
         chlr = Chiller(
@@ -140,13 +152,16 @@ class TestChiller(TestCase):
         )
 
         self.assertTrue(
-            [6.7, 35.0] == [round(v, 1) for v in chlr.get_ref_values("cap-f-t")]
+            [6.7, 35.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.CAP_F_T)]
         )
         self.assertTrue(
-            [6.7, 35.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-t")]
+            [6.7, 35.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_T)]
         )
         self.assertTrue(
-            [1.0, 0.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-plr")]
+            [1.0, 0.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_PLR)]
         )
 
         chlr = Chiller(
@@ -164,13 +179,16 @@ class TestChiller(TestCase):
         )
 
         self.assertTrue(
-            [7.0, 35.0] == [round(v, 1) for v in chlr.get_ref_values("cap-f-t")]
+            [7.0, 35.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.CAP_F_T)]
         )
         self.assertTrue(
-            [7.0, 35.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-t")]
+            [7.0, 35.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_T)]
         )
         self.assertTrue(
-            [1.0, 0.0] == [round(v, 1) for v in chlr.get_ref_values("eir-f-plr")]
+            [1.0, 0.0]
+            == [round(v, 1) for v in chlr.get_ref_values(CurveTypes.EIR_F_PLR)]
         )
 
     def test_get_lct(self):
