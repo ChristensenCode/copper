@@ -1,3 +1,4 @@
+from collections import namedtuple
 """
 constants.py
 ====================================
@@ -43,3 +44,5 @@ SCHEMA_LOCATION = "copper/lib/instruction_set_schema.json"
 
 # Curve data file
 CURVE_DATA = "copper/lib/chiller_curves.json"
+
+CurveFilter = namedtuple("CurveFilter", "column_name column_data")
