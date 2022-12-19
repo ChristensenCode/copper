@@ -107,7 +107,10 @@ class Chiller:
             entering_condenser_temperature = air_data["entering_condenser_temperature"]
             leaving_condenser_temperature = air_data["leaving_condenser_temperature"]
 
-            self.plotting_range = PlottingRange.get_ect_lwt_data()
+            self.plotting_range = PlottingRange.get_ect_lwt_data(
+                entering_condenser_temperature=entering_condenser_temperature,
+                leaving_water_temperature=leaving_water_temperature,
+            )
 
         self.ref_lwt, self.ref_ect, self.ref_lct = (
             leaving_water_temperature,
