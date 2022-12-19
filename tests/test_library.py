@@ -2,12 +2,71 @@ from unittest import TestCase
 
 import copper as cp
 import os
+from copper.constants import CurveFilter
 
 LOCATION = os.path.dirname(os.path.realpath(__file__))
 CHILLER_LIB = os.path.join(LOCATION, "../copper/lib", "chiller_curves.json")
 
 
 class TestLibrary(TestCase):
+    def setUp(self) -> None:
+        """Runs before every test. Good place to initialize values and store common objects."""
+        self.lib = cp.Library(path=CHILLER_LIB)
+
+    def tearDown(self) -> None:
+        """Runs after every test and cleans up file created from the tests."""
+        ...
+
+    def test_find_equipment_df_all_except(self):
+        column_name = "compressor_type"
+        curve_filters = [CurveFilter(column_name, "~!scroll")]
+        filtered_values = self.lib.find_equipment_df(filters=curve_filters)
+        self.assertTrue(
+            list(filtered_values[column_name].unique())
+            == ["centrifugal", "reciprocating", "screw"]
+        )
+
+    def test_find_equipment_df_do_not_include(self):
+        column_name = "compressor_type"
+        curve_filters = [
+            CurveFilter(column_name, "!scroll"),
+            CurveFilter(column_name, "!screw"),
+        ]
+        filtered_values = self.lib.find_equipment_df(filters=curve_filters)
+        self.assertTrue(
+            list(filtered_values[column_name].unique())
+            == ["centrifugal", "reciprocating"]
+        )
+
+    def test_find_equipment_df_include(self):
+        column_name = "compressor_type"
+        curve_filters = [
+            CurveFilter(column_name, "~scroll"),
+        ]
+        filtered_values = self.lib.find_equipment_df(filters=curve_filters)
+        self.assertTrue(list(filtered_values[column_name].unique()) == ["scroll"])
+
+    def test_find_equipment_df_missing_column(self):
+        column_name = "pump_type"
+        curve_filters = [
+            CurveFilter(column_name, "positive-displacement"),
+        ]
+        with self.assertRaises(KeyError) as context:
+            self.lib.find_equipment_df(filters=curve_filters)
+        self.assertTrue(
+            f"{column_name} not found in columns name:" in str(context.exception)
+        )
+
+    def test_find_equipment_df_missing_value(self):
+        column_name = "compressor_type"
+        column_value = "vane"
+        curve_filters = [
+            CurveFilter(column_name, column_value),
+        ]
+        with self.assertRaises(ValueError) as context:
+            self.lib.find_equipment_df(filters=curve_filters)
+        self.assertTrue(f"{column_value} value not found in" in str(context.exception))
+
     def test_part_load_efficiency_calcs(self):
         """
         Test part load calculations when the library is loaded.
