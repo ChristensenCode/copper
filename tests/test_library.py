@@ -67,14 +67,20 @@ class TestLibrary(TestCase):
             self.lib.find_equipment_df(filters=curve_filters)
         self.assertTrue(f"{column_value} value not found in" in str(context.exception))
 
+    def test_get_set_of_curves_by_name(self):
+        custom_curves = self.lib.get_set_of_curves_by_name("6").curves
+        print()
+
+    def test_read_chiller_curve_data(self):
+        clean_curve_data = self.lib.read_chiller_curve_data()
+
     def test_part_load_efficiency_calcs(self):
         """
         Test part load calculations when the library is loaded.
         """
 
         # Load library
-        lib = cp.Library(path=CHILLER_LIB)
-        self.assertTrue(lib.content()["6"]["part_eff"] > 0)
+        self.assertTrue(self.lib.content()["6"]["part_eff"] > 0)
 
         # Check calculation for the chiller EIR model
         chlr = cp.Chiller(
@@ -88,7 +94,7 @@ class TestLibrary(TestCase):
             part_eff_ref_std="ahri_551/591",
             model="ect_lwt",
             sim_engine="energyplus",
-            set_of_curves=lib.get_set_of_curves_by_name("6").curves,
+            set_of_curves=self.lib.get_set_of_curves_by_name("6").curves,
         )
 
         assert round(chlr.calc_rated_eff("part", "cop"), 2) == 5.44  # IPLV.SI
@@ -105,7 +111,7 @@ class TestLibrary(TestCase):
             part_eff_ref_std="ahri_550/590",
             model="ect_lwt",
             sim_engine="energyplus",
-            set_of_curves=lib.get_set_of_curves_by_name("6").curves,
+            set_of_curves=self.lib.get_set_of_curves_by_name("6").curves,
         )
 
         assert round(chlr.calc_rated_eff("part", "cop"), 2) == 5.47  # IPLV.IP
@@ -122,7 +128,7 @@ class TestLibrary(TestCase):
             part_eff_ref_std="ahri_551/591",
             model="lct_lwt",
             sim_engine="energyplus",
-            set_of_curves=lib.get_set_of_curves_by_name("337").curves,
+            set_of_curves=self.lib.get_set_of_curves_by_name("337").curves,
         )
 
         assert round(chlr.calc_rated_eff("part", "cop"), 2) == 8.22  # IPLV.SI
@@ -139,7 +145,7 @@ class TestLibrary(TestCase):
             part_eff_ref_std="ahri_550/590",
             model="lct_lwt",
             sim_engine="energyplus",
-            set_of_curves=lib.get_set_of_curves_by_name("337").curves,
+            set_of_curves=self.lib.get_set_of_curves_by_name("337").curves,
         )
 
         assert round(chlr.calc_rated_eff("part", "cop"), 2) == 8.19  # IPLV.IP
