@@ -8,8 +8,9 @@ import json, inspect
 from copper.units import *
 from copper.curves import *
 import copper.chiller
-from copper.constants import CURVE_DATA
+from copper.constants import CURVE_DATA, CurveFilter
 from typing import List, Dict
+
 
 location = os.path.dirname(os.path.realpath(__file__))
 chiller_lib = os.path.join(location, "lib", "chiller_curves.json")
@@ -22,6 +23,9 @@ class Library:
 
         # Load library
         self.data = json.loads(open(self.path, "r").read())
+
+        # pandas verson of data
+        self.df_data = self.read_chiller_curve_data(self.path)
 
         # Calculate part load efficiency for each item in the library
         for item, vals in self.data.items():
@@ -86,18 +90,17 @@ class Library:
                     if "part_eff_unit" in vals.keys():
                         del vals["part_eff_unit"]
 
-    def _flatten_chiller_curve_data(
-        self, original_chiller_curves: pd.DataFrame
-    ) -> pd.DataFrame:
+    def read_chiller_curve_data(self, path_to_chiller_curves: str) -> pd.DataFrame:
         # Creates an empty dataframe to build with data
         flattened_df = pd.DataFrame()
 
         # Retains the original curve number in the chiller_curves.json
-        original_chiller_curves.reset_index(inplace=True)
-        original_chiller_curves.rename(columns={"index": "curve_number"}, inplace=True)
+        read_in_chiller_curves = pd.read_json(path_to_chiller_curves).transpose()
+        read_in_chiller_curves.reset_index(inplace=True)
+        read_in_chiller_curves.rename(columns={"index": "curve_number"}, inplace=True)
 
         # Loops over the original dataframe row by row. TODO: this could probably be vectorized.
-        for _, original_row_data in original_chiller_curves.iterrows():
+        for _, original_row_data in read_in_chiller_curves.iterrows():
             # Creates a dataframe based on the set_of_curves data from the original dataframe.
             set_of_curve_data = pd.DataFrame(
                 original_row_data["set_of_curves"]
@@ -121,6 +124,8 @@ class Library:
             # Appends the new updated rows to the empty dataframe
             flattened_df = pd.concat([flattened_df, merge_with_original], axis=0)
             # to create csv --> flattened_df.to_csv("chiller_curves.csv", index=False, header=True)
+            # Cleans up the index after the merge.
+            flattened_df.reset_index(inplace=True, drop=True)
         return flattened_df
 
     def load_obj(self, data):
@@ -252,7 +257,71 @@ class Library:
 
         return set_of_curvess
 
-    def find_equipment(self, filters=[]):
+    def find_equipment_df(self, filters: List[CurveFilter] = None) -> pd.DataFrame:
+        """Find equipment matching specified filter in the curve library.
+
+        Special filter characters:
+
+        - ~! means "all except..."
+        - ! means "do not include..."
+        - ~ means "include..."
+
+        :param list filters: List of filters, represented by namedtuples (column_name, column_data)
+        :return: A dataframe that's been reduced based on the provided list of filters.
+        :rtype: pd.DataFrame
+
+        """
+        if filters is None:
+            filters = []
+
+        data_to_reduce = self.df_data.copy()
+        all_except = "~!"
+        do_not_include = "!"
+        include = "~"
+
+        for column_name, filter_criteria in filters:
+            # Removes the special characters and removes any leading or trailing spaces.
+            cleaned_filter_criteria = (
+                filter_criteria.replace("!", "").replace("~", "").strip()
+            )
+
+            # Checks to make sure the columns and corresponding data values exist.
+            if column_name not in data_to_reduce.columns:
+                raise KeyError(
+                    f"{column_name} not found in columns name: {data_to_reduce.columns}"
+                )
+            elif cleaned_filter_criteria not in data_to_reduce[column_name].unique():
+                raise ValueError(
+                    f"{cleaned_filter_criteria} value not found in {column_name} column"
+                )
+
+            # Starts applying filters
+            if filter_criteria.startswith(all_except):
+                column_values = list(data_to_reduce[column_name].unique())
+                column_values.remove(cleaned_filter_criteria)
+                data_to_reduce = data_to_reduce[
+                    data_to_reduce[column_name].isin(column_values)
+                ]
+                continue
+
+            elif filter_criteria.startswith(do_not_include):
+                data_to_reduce = data_to_reduce[
+                    data_to_reduce[column_name] != cleaned_filter_criteria
+                ]
+                continue
+
+            elif filter_criteria.startswith(include):
+                data_to_reduce = data_to_reduce[
+                    data_to_reduce[column_name] == cleaned_filter_criteria
+                ]
+                continue
+
+            data_to_reduce = data_to_reduce[
+                data_to_reduce[column_name] == filter_criteria
+            ]
+        return data_to_reduce
+
+    def find_equipment(self, filters: List[CurveFilter] = None):
         """Find equipment matching specified filter in the curve library.
 
         Special filter characters:
@@ -266,6 +335,9 @@ class Library:
         :rtype: dict
 
         """
+        if filters is None:
+            filters = []
+
         eqp_match_dict = {}
         for eqp in self.data:
             assertions = []
