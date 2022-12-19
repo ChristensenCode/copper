@@ -16,6 +16,7 @@ import itertools
 import logging
 from copper.units import *
 from copper.constants import LOGGING_FORMAT
+from copper.constants import CurveTypes
 
 logging.basicConfig(format=LOGGING_FORMAT)
 
@@ -91,23 +92,23 @@ class SetsofCurves:
 
                 # TODO: move assignement to Curve() class and values ot Chiller() class
                 if c.eqp.model == "lct_lwt":
-                    if c.out_var == "eir-f-t":
+                    if c.out_var == CurveTypes.EIR_F_T:
                         c.ref_x = c.ref_lwt
                         c.ref_y = c.ref_lct
-                    if c.out_var == "cap-f-t":
+                    if c.out_var == CurveTypes.CAP_F_T:
                         c.ref_x = c.ref_lwt
                         c.ref_y = c.ref_lct
-                    if c.out_var == "eir-f-plr":
+                    if c.out_var == CurveTypes.EIR_F_PLR:
                         c.ref_x = c.ref_lct
                         c.ref_y = 1.0  # plr = 1.0
                 elif c.eqp.model == "ect_lwt":
-                    if c.out_var == "eir-f-t":
+                    if c.out_var == CurveTypes.EIR_F_T:
                         c.ref_x = c.ref_lwt
                         c.ref_y = c.ref_ect
-                    if c.out_var == "cap-f-t":
+                    if c.out_var == CurveTypes.CAP_F_T:
                         c.ref_x = c.ref_lwt
                         c.ref_y = c.ref_ect
-                    if c.out_var == "eir-f-plr":
+                    if c.out_var == CurveTypes.EIR_F_PLR:
                         c.ref_x = 1.0  # plr = 1.0
                         c.ref_y = 0.0  # no dependent variable
 
@@ -772,9 +773,9 @@ class Curve:
         r_sqr = 0
 
         # Define expected gradient sign
-        if self.out_var == "eir-f-t" or self.out_var == "eir-f-plr":
+        if self.out_var == CurveTypes.EIR_F_T or self.out_var == CurveTypes.EIR_F_PLR:
             sign_val = +1
-        elif self.out_var == "cap-f-t":
+        elif self.out_var == CurveTypes.CAP_F_T:
             sign_val = -1
 
         # Drop duplicate entries

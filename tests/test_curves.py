@@ -7,6 +7,7 @@ import CoolProp.CoolProp as CP
 import os
 from pathlib import Path
 from copper.constants import CurveFilter
+from copper.chiller import CurveTypes
 
 LOCATION = os.path.dirname(os.path.realpath(__file__))
 CHILLER_LIB = os.path.join(LOCATION, "../copper/lib", "chiller_curves.json")
@@ -53,7 +54,7 @@ class TestCurves(TestCase):
         self.assertTrue(len(set_of_curvess) == 111)
 
         # Plot curves
-        out_vars = ["eir-f-t", "cap-f-t", "eir-f-plr"]
+        out_vars = [CurveTypes.EIR_F_T, CurveTypes.CAP_F_T, CurveTypes.EIR_F_PLR]
 
         fig, axes = plt.subplots(nrows=1, ncols=len(out_vars), figsize=(25, 5))
 
@@ -113,7 +114,7 @@ class TestCurves(TestCase):
         c.x_max = 15.6
         c.y_min = 10.0
         c.y_max = 40.0
-        c.out_var = "cap-f-t"
+        c.out_var = CurveTypes.CAP_F_T
 
         # Convert curves coefficient to IP
         c.convert_coefficients_to_ip()
@@ -165,15 +166,15 @@ class TestCurves(TestCase):
             cset.remove_curve("eir-f-plr-dt")
 
         ranges = {
-            "eir-f-t": {
+            CurveTypes.EIR_F_T: {
                 "vars_range": [(4, 10), (10.0, 40.0)],
                 "normalization": (6.67, 29.44),
             },
-            "cap-f-t": {
+            CurveTypes.CAP_F_T: {
                 "vars_range": [(4, 10), (10.0, 40.0)],
                 "normalization": (6.67, 29.44),
             },
-            "eir-f-plr": {"vars_range": [(0.0, 1.0)], "normalization": (1.0)},
+            CurveTypes.EIR_F_PLR: {"vars_range": [(0.0, 1.0)], "normalization": (1.0)},
         }
 
         misc_attr = {
@@ -224,15 +225,15 @@ class TestCurves(TestCase):
 
         # Determine aggregated curve
         ranges = {
-            "eir-f-t": {
+            CurveTypes.EIR_F_T: {
                 "vars_range": [(4, 10), (15.0, 50.0)],
                 "normalization": (6.67, 34.44),
             },
-            "cap-f-t": {
+            CurveTypes.CAP_F_T: {
                 "vars_range": [(4, 10), (15.0, 50.0)],
                 "normalization": (6.67, 34.44),
             },
-            "eir-f-plr": {
+            CurveTypes.EIR_F_PLR: {
                 "vars_range": [(15.0, 50.0), (0.0, 1.0)],
                 "normalization": (34.44, 1.0),
             },

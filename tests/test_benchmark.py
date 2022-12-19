@@ -39,7 +39,7 @@ class TestBenchmark(TestCase):
 #
 #            # Generate a set of performance curves for targeted equipment
 #            chlr.generate_set_of_curves(
-#                vars=["eir-f-t", "cap-f-t", "eir-f-plr"], method="best_match"
+#                vars=[CurveTypes.EIR_F_T, CurveTypes.CAP_F_T, CurveTypes.EIR_F_PLR], method="best_match"
 #            )
 #
 #            # Extract number of generation needed to reach goal

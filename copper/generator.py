@@ -255,7 +255,7 @@ class Generator:
                 else:
                     full_rating_alt = 0
                 cap_rating = 0
-                if "cap-f-t" in self.vars:
+                if CurveTypes.CAP_F_T in self.vars:
                     for c in self.equipment.set_of_curves:
                         # set_of_curves
                         if "cap" in c.out_var:
@@ -295,12 +295,12 @@ class Generator:
                 grad_list = []
                 for c in self.equipment.set_of_curves:
                     if (
-                        c.out_var == "eir-f-t"
-                        or c.out_var == "eir-f-plr"
+                        c.out_var == CurveTypes.EIR_F_T
+                        or c.out_var == CurveTypes.EIR_F_PLR
                         or c.out_var == "eir-f-plr-dt"
                     ):
                         sign_val = +1
-                    elif c.out_var == "cap-f-t":
+                    elif c.out_var == CurveTypes.CAP_F_T:
                         sign_val = -1
                     else:
                         raise ValueError("this curve output has not been implemented")

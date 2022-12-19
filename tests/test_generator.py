@@ -1,5 +1,5 @@
 from unittest import TestCase
-from copper.chiller import Chiller
+from copper.chiller import Chiller, CurveTypes
 from copper.generator import Generator
 
 
@@ -21,7 +21,7 @@ class TestAlgorithm(TestCase):
         )
 
         set_of_curves = chlr.generate_set_of_curves(
-            vars=["eir-f-plr"], method="nearest_neighbor", tol=0.005
+            vars=[CurveTypes.EIR_F_PLR], method="nearest_neighbor", tol=0.005
         )
 
         full_eff = chlr.calc_rated_eff(eff_type="full")
@@ -54,7 +54,7 @@ class TestAlgorithm(TestCase):
         tol = 0.005
 
         set_of_curves = chlr.generate_set_of_curves(
-            vars=["eir-f-plr"], method="nearest_neighbor", tol=tol
+            vars=[CurveTypes.EIR_F_PLR], method="nearest_neighbor", tol=tol
         )
 
         full_eff = chlr.calc_rated_eff(eff_type="full", unit=chlr.full_eff_unit)
@@ -87,7 +87,7 @@ class TestAlgorithm(TestCase):
         tol = 0.005
 
         set_of_curves = chlr.generate_set_of_curves(
-            vars=["eir-f-plr"],
+            vars=[CurveTypes.EIR_F_PLR],
             method="nearest_neighbor",
             tol=tol,
             max_restart=1,
@@ -142,7 +142,9 @@ class TestAlgorithm(TestCase):
             compressor_speed="constant",
         )
 
-        algo = Generator(equipment=chlr, vars=["eir-f-plr"], method="best_match")
+        algo = Generator(
+            equipment=chlr, vars=[CurveTypes.EIR_F_PLR], method="best_match"
+        )
         algo.generate_set_of_curves()
 
         grad_val = algo.check_gradients()
@@ -178,7 +180,7 @@ class TestAlgorithm(TestCase):
         tol = 0.1
 
         set_of_curves = chlr.generate_set_of_curves(
-            vars=["eir-f-plr"], method="best_match", tol=tol
+            vars=[CurveTypes.EIR_F_PLR], method="best_match", tol=tol
         )
 
         full_eff = chlr.calc_rated_eff(eff_type="full")
@@ -218,7 +220,9 @@ class TestAlgorithm(TestCase):
         tol = 0.03
 
         set_of_curves = chlr.generate_set_of_curves(
-            vars=["eir-f-t", "eir-f-plr"], method="best_match", tol=tol
+            vars=[CurveTypes.EIR_F_T, CurveTypes.EIR_F_PLR],
+            method="best_match",
+            tol=tol,
         )
 
         full_eff = chlr.calc_rated_eff(eff_type="full")
@@ -258,7 +262,9 @@ class TestAlgorithm(TestCase):
         tol = 0.1
 
         set_of_curves = chlr.generate_set_of_curves(
-            vars=["eir-f-t", "eir-f-plr"], method="best_match", tol=tol
+            vars=[CurveTypes.EIR_F_T, CurveTypes.EIR_F_PLR],
+            method="best_match",
+            tol=tol,
         )
 
         full_eff = chlr.calc_rated_eff(eff_type="full")
@@ -279,7 +285,7 @@ class TestAlgorithm(TestCase):
         # define parameters for chiller class
         primary_std = "ahri_550/590"
         secondary_std = "ahri_551/591"
-        out_var = ["eir-f-plr"]
+        out_var = [CurveTypes.EIR_F_PLR]
 
         # specify target efficiencies
         full_eff_target = 0.634

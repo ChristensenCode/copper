@@ -11,6 +11,7 @@ from copper.units import Units, newUnits
 from copper.curves import *
 from copper.library import *
 import copper.constants as const
+from copper.constants import CurveTypes
 from copper.constants import LOGGING_FORMAT
 import logging
 from abc import ABC, abstractmethod
@@ -166,7 +167,7 @@ class Chiller:
 
         # Retrieve curves
         curves = self.get_chiller_curves()
-        cap_f_t = curves["cap_f_t"]
+        cap_f_t = curves[CurveTypes.CAP_F_T]
         eir_f_t = curves["eir_f_t"]
         eir_f_plr = curves["eir_f_plr"]
 
@@ -352,7 +353,7 @@ class Chiller:
 
         # Retrieve curves
         curves = self.get_chiller_curves()
-        cap_f_t = curves["cap_f_t"]
+        cap_f_t = curves["caps_f_t"]
         eir_f_t = curves["eir_f_t"]
         eir_f_plr = curves["eir_f_plr"]
 
@@ -518,9 +519,9 @@ class Chiller:
         """
         curves = {}
         for curve in self.set_of_curves:
-            if curve.out_var == "cap-f-t":
-                curves["cap_f_t"] = curve
-            elif curve.out_var == "eir-f-t":
+            if curve.out_var == CurveTypes.CAP_F_T:
+                curves[CurveTypes.CAP_F_T] = curve
+            elif curve.out_var == CurveTypes.EIR_F_T:
                 curves["eir_f_t"] = curve
             else:
                 curves["eir_f_plr"] = curve
@@ -635,15 +636,15 @@ class Chiller:
         norm_val = {"ect_lwt": self.ref_ect, "lct_lwt": self.ref_lct}[self.model]
 
         ranges = {
-            "eir-f-t": {
+            CurveTypes.EIR_F_T: {
                 "vars_range": [(4, 10), (10.0, 40.0)],
                 "normalization": (self.ref_lwt, norm_val),
             },
-            "cap-f-t": {
+            CurveTypes.CAP_F_T: {
                 "vars_range": [(4, 10), (10.0, 40.0)],
                 "normalization": (self.ref_lwt, norm_val),
             },
-            "eir-f-plr": {"vars_range": [(0.0, 1.0)], "normalization": (1.0)},
+            CurveTypes.EIR_F_PLR: {"vars_range": [(0.0, 1.0)], "normalization": (1.0)},
         }
 
         return ranges
@@ -841,22 +842,6 @@ class WaterData:
     @classmethod
     def get_ahri_551(cls) -> Dict[str, float]:
         return cls.data_551
-
-
-class CurveTypes(Enum):
-    """Different types of modifiers
-
-    1. EIR-F-T      -->     Energy Input Ratio modifier as a Function of Temperature
-    2. CAP-F-T      -->     Capacity modifier as a function of temperature
-    3. EIR-F-PLR    -->     Energy Input Ratio modifier as a function of chiller's Part Load Ratio
-
-    :param Enum: parent class
-    :type Enum: parent class
-    """
-
-    EIR_F_T = auto()
-    CAP_F_T = auto()
-    EIR_F_PLR = auto()
 
 
 @dataclass

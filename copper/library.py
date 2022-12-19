@@ -8,7 +8,7 @@ import json, inspect
 from copper.units import *
 from copper.curves import *
 import copper.chiller
-from copper.constants import CURVE_DATA, CurveFilter
+from copper.constants import CURVE_DATA, CurveFilter, CurveTypes
 from typing import List, Dict
 
 
@@ -126,6 +126,7 @@ class Library:
             # to create csv --> flattened_df.to_csv("chiller_curves.csv", index=False, header=True)
             # Cleans up the index after the merge.
             flattened_df.reset_index(inplace=True, drop=True)
+        print()
         return flattened_df
 
     def load_obj(self, data):
