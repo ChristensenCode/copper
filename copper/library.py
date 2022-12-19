@@ -18,6 +18,8 @@ chiller_lib = os.path.join(location, "lib", "chiller_curves.json")
 
 class Library:
     def __init__(self, path=CURVE_DATA, rating_std="", export=False):
+        # TODO: move whatever is going on here that's not initialization into it's
+        # own method to keep the initialization process clean.
         self.path = path
         self.rating_std = rating_std
 
@@ -106,6 +108,13 @@ class Library:
                 original_row_data["set_of_curves"]
             ).transpose()
 
+            set_of_curve_data.drop(columns=["out_var"], inplace=True)
+            set_of_curve_data["out_var"] = [
+                CurveTypes.EIR_F_T,
+                CurveTypes.CAP_F_T,
+                CurveTypes.EIR_F_PLR,
+            ]
+
             # The index should be dropped inplace because it's not needed.
             set_of_curve_data.reset_index(inplace=True, drop=True)
 
@@ -126,7 +135,6 @@ class Library:
             # to create csv --> flattened_df.to_csv("chiller_curves.csv", index=False, header=True)
             # Cleans up the index after the merge.
             flattened_df.reset_index(inplace=True, drop=True)
-        print()
         return flattened_df
 
     def load_obj(self, data):

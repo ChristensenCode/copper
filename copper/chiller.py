@@ -168,8 +168,8 @@ class Chiller:
         # Retrieve curves
         curves = self.get_chiller_curves()
         cap_f_t = curves[CurveTypes.CAP_F_T]
-        eir_f_t = curves["eir_f_t"]
-        eir_f_plr = curves["eir_f_plr"]
+        eir_f_t = curves[CurveTypes.EIR_F_T]
+        eir_f_plr = curves[CurveTypes.EIR_F_PLR]
 
         cap_f_lwt_lct_rated = cap_f_t.evaluate(self.ref_lwt, self.ref_lct)
         cap_f_lwt_lct = cap_f_t.evaluate(self.ref_lwt, self.ref_lct)
@@ -353,9 +353,9 @@ class Chiller:
 
         # Retrieve curves
         curves = self.get_chiller_curves()
-        cap_f_t = curves["caps_f_t"]
-        eir_f_t = curves["eir_f_t"]
-        eir_f_plr = curves["eir_f_plr"]
+        cap_f_t = curves[CurveTypes.CAP_F_T]
+        eir_f_t = curves[CurveTypes.EIR_F_T]
+        eir_f_plr = curves[CurveTypes.EIR_F_T]
 
         try:
             for idx, load in enumerate(
@@ -522,9 +522,9 @@ class Chiller:
             if curve.out_var == CurveTypes.CAP_F_T:
                 curves[CurveTypes.CAP_F_T] = curve
             elif curve.out_var == CurveTypes.EIR_F_T:
-                curves["eir_f_t"] = curve
+                curves[CurveTypes.EIR_F_T] = curve
             else:
-                curves["eir_f_plr"] = curve
+                curves[CurveTypes.EIR_F_PLR] = curve
 
         return curves
 

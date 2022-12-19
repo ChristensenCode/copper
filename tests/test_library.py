@@ -73,6 +73,7 @@ class TestLibrary(TestCase):
 
     def test_read_chiller_curve_data(self):
         clean_curve_data = self.lib.read_chiller_curve_data()
+        assert True
 
     def test_part_load_efficiency_calcs(self):
         """
