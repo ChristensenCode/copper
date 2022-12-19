@@ -73,101 +73,41 @@ class Chiller:
 
         if self.condenser_type == "water":
             if self.part_eff_ref_std == "ahri_550/590":
-                leaving_water_temperature = newUnits.F_to_C(const.COOLING_LCT_550_590)
-                entering_condenser_temperature = newUnits.F_to_C(
-                    const.TOWER_ECT_550_590
-                )
-                leaving_condenser_temperature = newUnits.F_to_C(const.TOWER_LCT_550_590)
+                water_data = WaterData.get_ahri_550()
+
             elif self.part_eff_ref_std == "ahri_551/591":
-                leaving_water_temperature = const.COOLING_LCT_551_591
-                entering_condenser_temperature = const.TOWER_ENTERING_TEMP_551_591
-                leaving_condenser_temperature = const.TOWER_ECT_551_591
+                water_data = WaterData.get_ahri_551()
+
+            leaving_water_temperature = water_data["leaving_water_temperature"]
+            entering_condenser_temperature = water_data[
+                "entering_condenser_temperature"
+            ]
+            leaving_condenser_temperature = water_data["leaving_condenser_temperature"]
 
             if self.model == "ect_lwt":
-                self.plotting_range = {
-                    "eir-f-t": {
-                        "x1_min": leaving_water_temperature,
-                        "x1_max": leaving_water_temperature,
-                        "x1_norm": leaving_water_temperature,
-                        "nbval": 50,
-                        "x2_min": 10,
-                        "x2_max": 40,
-                        "x2_norm": entering_condenser_temperature,
-                    },
-                    "cap-f-t": {
-                        "x1_min": leaving_water_temperature,
-                        "x1_max": leaving_water_temperature,
-                        "x1_norm": leaving_water_temperature,
-                        "nbval": 50,
-                        "x2_min": 10,
-                        "x2_max": 40,
-                        "x2_norm": entering_condenser_temperature,
-                    },
-                    "eir-f-plr": {"x1_min": 0, "x1_max": 1, "x1_norm": 1, "nbval": 50},
-                }
+                self.plotting_range = PlottingRange().get_ect_lwt_data(
+                    entering_condenser_temperature=entering_condenser_temperature,
+                    leaving_water_temperature=leaving_water_temperature,
+                )
             elif self.model == "lct_lwt":
-                self.plotting_range = {
-                    "eir-f-t": {
-                        "x1_min": leaving_water_temperature,
-                        "x1_max": leaving_water_temperature,
-                        "x1_norm": leaving_water_temperature,
-                        "nbval": 50,
-                        "x2_min": 10,
-                        "x2_max": 60,
-                        "x2_norm": leaving_condenser_temperature,
-                    },
-                    "cap-f-t": {
-                        "x1_min": leaving_water_temperature,
-                        "x1_max": leaving_water_temperature,
-                        "x1_norm": leaving_water_temperature,
-                        "nbval": 50,
-                        "x2_min": 10,
-                        "x2_max": 60,
-                        "x2_norm": leaving_condenser_temperature,
-                    },
-                    "eir-f-plr": {
-                        "x1_min": leaving_condenser_temperature,
-                        "x1_max": leaving_condenser_temperature,
-                        "x1_norm": leaving_condenser_temperature,
-                        "nbval": 50,
-                        "x2_min": 0.0,
-                        "x2_max": 1.0,
-                        "x2_norm": 1.0,
-                    },
-                }
+                self.plotting_range = PlottingRange().get_lct_lwt(
+                    leaving_condenser_temperature=leaving_condenser_temperature,
+                    leaving_water_temperature=leaving_water_temperature,
+                )
             else:
                 raise ValueError("Algorithm not supported.")
         elif self.condenser_type == "air":
             if self.part_eff_ref_std == "ahri_550/590":
-                leaving_water_temperature = newUnits.F_to_C(const.COOLING_LCT_550_590)
-                entering_condenser_temperature = newUnits.F_to_C(const.EVAP_ECT)
-                leaving_condenser_temperature = -999  # does not apply
-            elif self.part_eff_ref_std == "ahri_551/591":
-                leaving_water_temperature = const.COOLING_LCT_551_591
-                entering_condenser_temperature = const.TOWER_ECT_551_591
-                leaving_condenser_temperature = -999  # does not apply
+                air_data = AirData.get_ahri_550()
 
-            self.plotting_range = {
-                "eir-f-t": {
-                    "x1_min": leaving_water_temperature,
-                    "x1_max": leaving_water_temperature,
-                    "x1_norm": leaving_water_temperature,
-                    "nbval": 50,
-                    "x2_min": 10,
-                    "x2_max": 40,
-                    "x2_norm": entering_condenser_temperature,
-                },
-                "cap-f-t": {
-                    "x1_min": leaving_water_temperature,
-                    "x1_max": leaving_water_temperature,
-                    "x1_norm": leaving_water_temperature,
-                    "nbval": 50,
-                    "x2_min": 10,
-                    "x2_max": 40,
-                    "x2_norm": entering_condenser_temperature,
-                },
-                "eir-f-plr": {"x1_min": 0, "x1_max": 1, "x1_norm": 1, "nbval": 50},
-            }
+            elif self.part_eff_ref_std == "ahri_551/591":
+                air_data = AirData.get_ahri_551()
+
+            leaving_water_temperature = air_data["leaving_water_temperature"]
+            entering_condenser_temperature = air_data["entering_condenser_temperature"]
+            leaving_condenser_temperature = air_data["leaving_condenser_temperature"]
+
+            self.plotting_range = PlottingRange.get_ect_lwt_data()
 
         self.ref_lwt, self.ref_ect, self.ref_lct = (
             leaving_water_temperature,
@@ -846,17 +786,58 @@ class WaterChiller(ChillerInterface):
 
 @dataclass(frozen=True)
 class AirData:
-    ...
+    terms = [
+        "leaving_water_temperature",
+        "entering_condenser_temperature",
+        "leaving_condenser_temperature",
+    ]
+
+    data_550_values = [
+        newUnits.F_to_C(const.COOLING_LCT_550_590),
+        newUnits.F_to_C(const.EVAP_ECT),
+        constants.UNDEFINED_CONSTANT,
+    ]
+
+    data_550 = {key: value for key, value in zip(terms, data_550_values)}
+
+    data_551_values = [
+        const.COOLING_LCT_551_591,
+        const.TOWER_ECT_551_591,
+        constants.UNDEFINED_CONSTANT,
+    ]
+
+    data_551 = {key: value for key, value in zip(terms, data_551_values)}
+
+    @classmethod
+    def get_ahri_550(cls) -> Dict[str, float]:
+        return cls.data_550
+
+    @classmethod
+    def get_ahri_551(cls) -> Dict[str, float]:
+        return cls.data_551
 
 
 @dataclass(frozen=True)
 class WaterData:
-    ...
+    data_550 = {
+        "leaving_water_temperature": newUnits.F_to_C(const.COOLING_LCT_550_590),
+        "entering_condenser_temperature": newUnits.F_to_C(const.TOWER_ECT_550_590),
+        "leaving_condenser_temperature": newUnits.F_to_C(const.TOWER_LCT_550_590),
+    }
 
+    data_551 = {
+        "leaving_water_temperature": const.COOLING_LCT_551_591,
+        "entering_condenser_temperature": const.TOWER_ENTERING_TEMP_551_591,
+        "leaving_condenser_temperature": const.TOWER_ECT_551_591,
+    }
 
-class ModelTypes(Enum):
-    ECT_LWT = auto()
-    LCT_LWT = auto()
+    @classmethod
+    def get_ahri_550(cls) -> Dict[str, float]:
+        return cls.data_550
+
+    @classmethod
+    def get_ahri_551(cls) -> Dict[str, float]:
+        return cls.data_551
 
 
 class CurveTypes(Enum):
@@ -873,3 +854,75 @@ class CurveTypes(Enum):
     EIR_F_T = auto()
     CAP_F_T = auto()
     EIR_F_PLR = auto()
+
+
+@dataclass
+class PlottingRange:
+    @classmethod
+    def get_ect_lwt_data(
+        cls,
+        entering_condenser_temperature: float = None,
+        leaving_water_temperature: float = None,
+    ) -> Dict[CurveTypes, Dict[str, float]]:
+        return {
+            CurveTypes.EIR_F_T: {
+                "x1_min": leaving_water_temperature,
+                "x1_max": leaving_water_temperature,
+                "x1_norm": leaving_water_temperature,
+                "nbval": 50,
+                "x2_min": 10,
+                "x2_max": 40,
+                "x2_norm": entering_condenser_temperature,
+            },
+            CurveTypes.CAP_F_T: {
+                "x1_min": leaving_water_temperature,
+                "x1_max": leaving_water_temperature,
+                "x1_norm": leaving_water_temperature,
+                "nbval": 50,
+                "x2_min": 10,
+                "x2_max": 40,
+                "x2_norm": entering_condenser_temperature,
+            },
+            CurveTypes.EIR_F_PLR: {"x1_min": 0, "x1_max": 1, "x1_norm": 1, "nbval": 50},
+        }
+
+    @classmethod
+    def get_lct_lwt(
+        cls,
+        leaving_condenser_temperature: float = None,
+        leaving_water_temperature: float = None,
+    ) -> Dict[CurveTypes, Dict[str, float]]:
+        return {
+            CurveTypes.EIR_F_T: {
+                "x1_min": leaving_water_temperature,
+                "x1_max": leaving_water_temperature,
+                "x1_norm": leaving_water_temperature,
+                "nbval": 50,
+                "x2_min": 10,
+                "x2_max": 60,
+                "x2_norm": leaving_condenser_temperature,
+            },
+            CurveTypes.CAP_F_T: {
+                "x1_min": leaving_water_temperature,
+                "x1_max": leaving_water_temperature,
+                "x1_norm": leaving_water_temperature,
+                "nbval": 50,
+                "x2_min": 10,
+                "x2_max": 60,
+                "x2_norm": leaving_condenser_temperature,
+            },
+            CurveTypes.EIR_F_PLR: {
+                "x1_min": leaving_condenser_temperature,
+                "x1_max": leaving_condenser_temperature,
+                "x1_norm": leaving_condenser_temperature,
+                "nbval": 50,
+                "x2_min": 0.0,
+                "x2_max": 1.0,
+                "x2_norm": 1.0,
+            },
+        }
+
+
+class ModelTypes(Enum):
+    ECT_LWT = auto()
+    LCT_LWT = auto()
