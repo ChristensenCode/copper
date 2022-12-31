@@ -23,11 +23,16 @@ class Library:
         self.path = path
         self.rating_std = rating_std
 
-        # Load library
+        # Load libraryh
         self.data = json.loads(open(self.path, "r").read())
+        old_version = False
+        if old_version:
+            self.part_eff()
 
         # pandas verson of data
-        self.df_data = self.read_chiller_curve_data(self.path)
+        self.df_data = self.read_chiller_curve_data()
+
+    def calculate_part_eff(self):
 
         # Calculate part load efficiency for each item in the library
         for item, vals in self.data.items():
@@ -92,12 +97,22 @@ class Library:
                     if "part_eff_unit" in vals.keys():
                         del vals["part_eff_unit"]
 
-    def read_chiller_curve_data(self, path_to_chiller_curves: str) -> pd.DataFrame:
+    def read_chiller_curve_data(self) -> pd.DataFrame:
+        """Reads in a json (path based on one provided to construtor) and converts it into
+        a dataframe. The dataframe flattens the nested set_of_curves values into repeated rows.
+        This assumes each set of curves has 3 entries and they are in the following order:
+        1. EIR_F_T
+        2. CAP_F_T
+        3. EIR_F_PLR
+
+        Returns:
+            pd.DataFrame: flatten dataframe of curve data.
+        """
         # Creates an empty dataframe to build with data
         flattened_df = pd.DataFrame()
 
         # Retains the original curve number in the chiller_curves.json
-        read_in_chiller_curves = pd.read_json(path_to_chiller_curves).transpose()
+        read_in_chiller_curves = pd.read_json(self.path).transpose()
         read_in_chiller_curves.reset_index(inplace=True)
         read_in_chiller_curves.rename(columns={"index": "curve_number"}, inplace=True)
 

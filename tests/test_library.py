@@ -73,7 +73,9 @@ class TestLibrary(TestCase):
 
     def test_read_chiller_curve_data(self):
         clean_curve_data = self.lib.read_chiller_curve_data()
-        assert True
+        # The original curve file contains 369 curves and they all contain 3
+        # set of curves, which is 1107 entries.
+        self.assertTrue(clean_curve_data.shape == (1107, 39))
 
     def test_part_load_efficiency_calcs(self):
         """

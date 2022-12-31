@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from copper.constants import CurveFilter
 from copper.chiller import CurveTypes
+from copper.curves import Curve
 
 LOCATION = os.path.dirname(os.path.realpath(__file__))
 CHILLER_LIB = os.path.join(LOCATION, "../copper/lib", "chiller_curves.json")
@@ -17,12 +18,35 @@ class TestCurves(TestCase):
     def setUp(self) -> None:
         """Runs before every test. Good place to initialize values and store common objects."""
         self.lib = cp.Library(path=CHILLER_LIB)
+        equipment_piece = self.lib.df_data.iloc[0]
+        self.new_curve = Curve(equipment_piece, "bi_quad")
+        self.new_curve.coeff1 = 1
+        self.new_curve.coeff2 = 1
+        self.new_curve.coeff3 = 1
+        self.new_curve.coeff4 = 1
+        self.new_curve.coeff5 = 1
+        self.new_curve.coeff6 = 1
+        self.new_curve.coeff7 = 1
+        self.new_curve.coeff8 = 1
+        self.new_curve.coeff9 = 1
+        self.new_curve.coeff10 = 1
+        self.new_curve.x_min = 1
+        self.new_curve.x_max = 10
+        self.new_curve.y_min = 1
+        self.new_curve.y_max = 10
+        self.new_curve.out_min = 1
+        self.new_curve.out_max = 10
 
     def tearDown(self) -> None:
         """Runs after every test and cleans up file created from the tests."""
         idf_files = Path(".").rglob("*.idf")
         for idf_file in idf_files:
             os.remove(idf_file)
+
+    def test_calc_bi_cub(self):
+
+        calc = self.new_curve._calc_bi_cub(2, 2)
+        print("test")
 
     def test_curves(self):
         # Curve lookup by name

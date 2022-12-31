@@ -14,9 +14,13 @@ import statsmodels.api as sm
 import statistics
 import itertools
 import logging
-from copper.units import *
+from copper.units import Units, newUnits
 from copper.constants import LOGGING_FORMAT
 from copper.constants import CurveTypes
+import copper.constants as constants
+from copper.fluid_properties import WaterData, AirData
+from dataclasses import dataclass
+from typing import Dict
 
 logging.basicConfig(format=LOGGING_FORMAT)
 
@@ -186,7 +190,7 @@ class SetsofCurves:
             data.columns = ["X1", "X2", "Y"]
 
             # Create new curve
-            new_curve = Curve(eqp=self.eqp, c_type="")  # curve type is set later on
+            new_curve = Curve(eqp=self.eqp, curve_type="")  # curve type is set later on
 
             # Assign curve attributes, assume no min/max
             # TODO: Allow min/max to be passed by user
@@ -601,67 +605,105 @@ class SetofCurves:
 
 
 class Curve:
-    def __init__(self, eqp, c_type):
+    def __init__(self, eqp, curve_type: str):
         # General charactersitics
         self.eqp = eqp
+        self.type = curve_type.lower()
+
         self.out_var = ""
-        self.type = c_type
         self.units = "si"
-        self.x_min = None
-        self.y_min = None
-        self.x_max = None
-        self.y_max = None
-        self.out_min = None
-        self.out_max = None
+        self.x_min = -constants.UNDEFINED_CONSTANT
+        self.y_min = -constants.UNDEFINED_CONSTANT
+        self.x_max = constants.UNDEFINED_CONSTANT
+        self.y_max = constants.UNDEFINED_CONSTANT
+        self.out_min = -constants.UNDEFINED_CONSTANT
+        self.out_max = constants.UNDEFINED_CONSTANT
+
+        # Initialize coefficients for calculations.
         self.ref_x = 0
         self.ref_y = 0
-        if self.type == "quad":
-            self.coeff1 = 0
-            self.coeff2 = 0
-            self.coeff3 = 0
-        elif self.type == "cubic":
-            self.coeff1 = 0
-            self.coeff2 = 0
-            self.coeff3 = 0
-            self.coeff4 = 0
-        elif self.type == "bi_quad":
-            self.coeff1 = 0
-            self.coeff2 = 0
-            self.coeff3 = 0
-            self.coeff4 = 0
-            self.coeff5 = 0
-            self.coeff6 = 0
-        elif self.type == "bi_cub":
-            self.coeff1 = 0
-            self.coeff2 = 0
-            self.coeff3 = 0
-            self.coeff4 = 0
-            self.coeff5 = 0
-            self.coeff6 = 0
-            self.coeff7 = 0
-            self.coeff8 = 0
-            self.coeff9 = 0
-            self.coeff10 = 0
+        self.coeff1 = 0
+        self.coeff2 = 0
+        self.coeff3 = 0
+        self.coeff4 = 0
+        self.coeff5 = 0
+        self.coeff6 = 0
+        self.coeff7 = 0
+        self.coeff8 = 0
+        self.coeff9 = 0
+        self.coeff10 = 0
+        self.ref_evap_fluid_flow = 0
+        self.ref_cond_fluid_flow = 0
 
         # Equipment specific charactertics
         # TODO: move under a function in the Chiller class
         if self.eqp.type == "chiller":
-            self.ref_evap_fluid_flow = 0
-            self.ref_cond_fluid_flow = 0
-            if self.eqp.part_eff_ref_std == "ahri_550/590":
-                self.ref_lwt = (44.0 - 32.0) * 5 / 9
-                if self.eqp.condenser_type == "water":
-                    self.ref_ect = (85.0 - 32.0) * 5 / 9
-                    self.ref_lct = (94.3 - 32.0) * 5 / 9
-                else:
-                    self.ref_ect = (95.0 - 32.0) * 5 / 9
-            elif self.eqp.part_eff_ref_std == "ahri_551/591":
-                self.ref_lwt = 7.0
-                if self.eqp.condenser_type == "water":
-                    self.ref_ect = 30.0
-                    self.ref_lct = 35
-                else:
-                    self.ref_ect = 35.0
+            reference_information = self._get_reference_conditions_chiller(
+                self.eqp.condenser_type, self.eqp.part_eff_ref_std
+            )
+
+            self.ref_lct = reference_information["leaving_condenser_temperature"]
+            self.ref_ect = reference_information["entering_condenser_temperature"]
+            self.ref_lwt = reference_information["leaving_water_temperature"]
+
+    def _get_reference_conditions_chiller(
+        self, condenser_type: str, part_eff_ref_std: str
+    ) -> Dict:
+        """Based on the condenser type and the code being followed, it will
+        return the necessary lct, ect, and lwt
+
+        :param condenser_type: fluid passing in the condenser
+        :type condenser_type: str
+        :param part_eff_ref_std: the standard being referenced
+        :type part_eff_ref_std: str
+        :return: All the lct, ect, and lwt data
+        :rtype: Dict
+        """
+        if condenser_type == "water":
+            reference_data = WaterData()
+        elif condenser_type == "air":
+            reference_data = AirData()
+
+        if part_eff_ref_std == "ahri_550/590":
+            return reference_data.get_ahri_550()
+        elif part_eff_ref_std == "ahri_551/591":
+            return reference_data.get_ahri_551()
+
+    def _calc_bi_cub(self, x, y):
+        out = (
+            self.coeff1
+            + self.coeff2 * x
+            + self.coeff3 * x**2
+            + self.coeff4 * y
+            + self.coeff5 * y**2
+            + self.coeff6 * x * y
+            + self.coeff7 * x**3
+            + self.coeff8 * y**3
+            + self.coeff9 * y * x**2
+            + self.coeff10 * x * y**2
+        )
+        return min(max(out, self.out_min), self.out_max)
+
+    def _calc_bi_quad(self, x, y):
+        out = (
+            self.coeff1
+            + self.coeff2 * x
+            + self.coeff3 * x**2
+            + self.coeff4 * y
+            + self.coeff5 * y**2
+            + self.coeff6 * x * y
+        )
+        return min(max(out, self.out_min), self.out_max)
+
+    def _calc_quad(self, x, y):
+        out = self.coeff1 + self.coeff2 * x + self.coeff3 * x**2
+        return min(max(out, self.out_min), self.out_max)
+
+    def _calc_cubic(self, x, y):
+        out = (
+            self.coeff1 + self.coeff2 * x + self.coeff3 * x**2 + self.coeff4 * x**3
+        )
+        return min(max(out, self.out_min), self.out_max)
 
     def evaluate(self, x, y):
         """Return the output of a curve.
@@ -672,58 +714,18 @@ class Curve:
         :rtype: float
 
         """
-        # Catch nulls
-        if self.out_min is None:
-            self.out_min = -999
-        if self.out_max is None:
-            self.out_max = 999
-        if self.x_min is None:
-            self.x_min = -999
-        if self.x_max is None:
-            self.x_max = 999
-        if self.y_min is None:
-            self.y_min = -999
-        if self.y_max is None:
-            self.y_max = 999
-
+        # Sets the range of values for output.
         x = min(max(x, self.x_min), self.x_max)
         y = min(max(y, self.y_min), self.y_max)
 
         if self.type == "bi_quad":
-            out = (
-                self.coeff1
-                + self.coeff2 * x
-                + self.coeff3 * x**2
-                + self.coeff4 * y
-                + self.coeff5 * y**2
-                + self.coeff6 * x * y
-            )
-            return min(max(out, self.out_min), self.out_max)
-        if self.type == "bi_cub":
-            out = (
-                self.coeff1
-                + self.coeff2 * x
-                + self.coeff3 * x**2
-                + self.coeff4 * y
-                + self.coeff5 * y**2
-                + self.coeff6 * x * y
-                + self.coeff7 * x**3
-                + self.coeff8 * y**3
-                + self.coeff9 * y * x**2
-                + self.coeff10 * x * y**2
-            )
-            return min(max(out, self.out_min), self.out_max)
-        if self.type == "quad":
-            out = self.coeff1 + self.coeff2 * x + self.coeff3 * x**2
-            return min(max(out, self.out_min), self.out_max)
-        if self.type == "cubic":
-            out = (
-                self.coeff1
-                + self.coeff2 * x
-                + self.coeff3 * x**2
-                + self.coeff4 * x**3
-            )
-            return min(max(out, self.out_min), self.out_max)
+            return self._calc_bi_quad(x, y)
+        elif self.type == "bi_cub":
+            return self._calc_bi_cub(x, y)
+        elif self.type == "quad":
+            return self._calc_quad(x, y)
+        elif self.type == "cubic":
+            return self._calc_cubic(x, y)
 
     def nb_coeffs(self):
         """Find number of curve coefficients.
@@ -813,7 +815,7 @@ class Curve:
             # Compute independent variable using model
             # to see if curve is monotonic
             vals = []
-            c = Curve(eqp=self.eqp, c_type="cubic")
+            c = Curve(eqp=self.eqp, curve_type="cubic")
             c.coeff1, c.coeff2, c.coeff3, c.coeff4 = model.params
             for x in data["X1"]:
                 vals.append(c.evaluate(x, 0))
